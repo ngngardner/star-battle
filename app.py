@@ -3,7 +3,7 @@
 import numpy as np
 
 
-def coordinates(points: tuple):
+def coordinates(points: tuple) -> list:
     '''
         Given an input tuple of size two, with both elements being numpy
         arrays, return a list of coordianates.
@@ -24,17 +24,17 @@ def coordinates(points: tuple):
     return c
 
 
-def blocked(puzzle: np.array, stars: np.array):
+def blocked(puzzle: np.array, stars: np.array) -> np.array:
     '''
         Given an input puzzle and star locations grid, return the
         stars grid with blocked locations as -1.
     '''
-    def reset_stars(stars: np.array, star_locs: list):
+    def reset_stars(stars: np.array, star_locs: list) -> np.array:
         # replace stars that were overwritten with their saved locations
         stars[tuple(np.transpose(star_locs))] = 1
         return stars
 
-    def block_groups(puzzle: np.array, stars: np.array):
+    def block_groups(puzzle: np.array, stars: np.array) -> np.array:
         '''
             Given an input star grid, block every grid space that already has
             a star in the same group.
@@ -53,7 +53,7 @@ def blocked(puzzle: np.array, stars: np.array):
         stars[tuple(np.transpose(blocked))] = -1
         return reset_stars(stars, star_locs)
 
-    def block_diagonal(stars: np.array):
+    def block_diagonal(stars: np.array) -> np.array:
         x = stars.shape[0]
         y = stars.shape[1]
         star_locs = coordinates(np.where(stars == 1))
@@ -78,7 +78,7 @@ def blocked(puzzle: np.array, stars: np.array):
         stars[tuple(np.transpose(blocked))] = -1
         return reset_stars(stars, star_locs)
 
-    def block_column(stars: np.array):
+    def block_column(stars: np.array) -> np.array:
         '''
             Given an input star grid, block every grid space that already has
             a star in the same column.
@@ -93,7 +93,7 @@ def blocked(puzzle: np.array, stars: np.array):
 
         return reset_stars(stars, star_locs)
 
-    def block_row(stars: np.array):
+    def block_row(stars: np.array) -> np.array:
         '''
             Given an input star grid, block every grid space that already has
             a star in the same row.
@@ -119,12 +119,14 @@ def blocked(puzzle: np.array, stars: np.array):
     return stars
 
 
-def smallest_group(puzzle: np.array, stars: np.array, available_loc: np.array):
+def smallest_group(puzzle: np.array,
+                   stars: np.array,
+                   available_loc: np.array) -> int:
     '''
         Given an input puzzle, return the smallest available group by index
         (e.g. 2)
     '''
-    def frequencies(puzzle: np.array):
+    def frequencies(puzzle: np.array) -> np.array:
         '''
             Given an input puzzle, return a 2d array, where column 0 is
             the group index, and column 1 is the count for that group.
@@ -132,31 +134,42 @@ def smallest_group(puzzle: np.array, stars: np.array, available_loc: np.array):
         groups, counts = np.unique(puzzle, return_counts=True)
         return np.asarray((groups, counts)).T
 
+    # top left most smallest group
     f = frequencies(puzzle)
     min_count = np.amin(f, axis=0)[1]
-
-    # top left most smallest group
     smallest = np.where(f[:, 1] == min_count)[0][0]
+
+    # find intersection of available locations with group locations
     group_loc = coordinates(np.where(puzzle == smallest))
     common = list(set(group_loc).intersection(available_loc))
 
     while not common:
-        test = np.where(f[:, 0] == smallest)
+        # index of the top left most smallest group
         smallest_loc = np.where(f[:, 0] == smallest)[0]
-        f = np.delete(f, smallest_loc, axis=0)
-        min_count = np.amin(f, axis=0)[1]
-        group = np.where(f[:, 1] == min_count)[0][0]
-        smallest = f[group][0]
-        group_loc = coordinates(np.where(puzzle == smallest))
-        common = list(set(group_loc).intersection(available_loc))
+
+        if len(f) > 1:
+            # delete smallest group by index, since it is blocked
+            f = np.delete(f, smallest_loc, axis=0)
+
+            # return group by group index (not array index)
+            min_count = np.amin(f, axis=0)[1]
+            group = np.where(f[:, 1] == min_count)[0][0]
+            smallest = f[group][0]
+
+            # find intersection of available locations with group locations
+            group_loc = coordinates(np.where(puzzle == smallest))
+            common = list(set(group_loc).intersection(available_loc))
+        else:
+            # there are no unblocked groups, so return invalid group index
+            return -1
     return smallest
 
 
-def place_star(puzzle: np.array, stars: np.array):
+def place_star(puzzle: np.array, stars: np.array) -> np.array:
     '''
         Place a star in the smallest top left-most position that is available.
     '''
-    def top_left_most(points: list):
+    def top_left_most(points: list) -> tuple:
         '''
             Given a list of tuples which are 2d coordinates, return the
             x, y coordinate pair that is top left most.
@@ -183,15 +196,56 @@ def place_star(puzzle: np.array, stars: np.array):
 
     available_loc = coordinates(np.where(stars == 0))
     s = smallest_group(puzzle, stars, available_loc)
-    group_loc = coordinates(np.where(puzzle == s))
-    common = list(set(group_loc).intersection(available_loc))
-    if len(common) > 0:
-        star_loc = top_left_most(common)
-        stars[star_loc] = 1
-        stars = blocked(puzzle, stars)
+    if s != -1:
+        group_loc = coordinates(np.where(puzzle == s))
+        common = list(set(group_loc).intersection(available_loc))
+        if len(common) > 0:
+            star_loc = top_left_most(common)
+            stars[star_loc] = 1
+            stars = blocked(puzzle, stars)
+        else:
+            print('error, no available locations')
     else:
-        print('error, no available locations')
+        print('error, all groups are blocked')
     return stars
+
+
+def check_illegal(puzzle: np.array, stars: np.array) -> bool:
+    def check_groups(puzzle: np.array, stars: np.array) -> bool:
+        return False
+
+    def check_columns(stars: np.array) -> bool:
+        rows = stars.shape[0]
+        cols = stars.shape[1]
+        for col in range(cols):
+            blocked = 0
+            for row in range(rows):
+                if stars[row, col] == -1:
+                    blocked += 1
+            if blocked >= rows:
+                return True
+        return False
+
+    def check_rows(stars: np.array) -> bool:
+        rows = stars.shape[0]
+        cols = stars.shape[1]
+        for row in range(rows):
+            blocked = 0
+            for col in range(cols):
+                if stars[row, col] == -1:
+                    blocked += 1
+            if blocked >= rows:
+                return True
+        return False
+
+    if check_groups(puzzle, stars):
+        return True
+    if check_columns(stars):
+        return True
+    if check_rows(stars):
+        return True
+
+    return False
 
 
 if __name__ == "__main__":
@@ -201,10 +255,9 @@ if __name__ == "__main__":
     print('Puzzle:')
     print(puzzle)
 
-    print('Star 1')
-    stars = place_star(puzzle, stars)
-    print(stars)
-
-    print('Star 2')
-    stars = place_star(puzzle, stars)
-    print(stars)
+    i = 0
+    while not(check_illegal(puzzle, stars)):
+        i += 1
+        print(f'Star {i}')
+        stars = place_star(puzzle, stars)
+        print(stars)
