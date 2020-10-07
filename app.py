@@ -8,7 +8,7 @@ def coordinates(points: tuple):
         Given an input tuple of size two, with both elements being numpy
         arrays, return a list of coordianates.
 
-        This function is required due to the output of np.where returning 
+        This function is required due to the output of np.where returning
         a an array of x-values and array of y-values.
     '''
     if len(points) != 2:
@@ -48,13 +48,35 @@ def blocked(puzzle: np.array, stars: np.array):
 
         blocked = []
         for group in unique_groups:
-            blocked.append(coordinates(np.where(puzzle == group)))
+            blocked = blocked + coordinates(np.where(puzzle == group))
 
         stars[tuple(np.transpose(blocked))] = -1
         return reset_stars(stars, star_locs)
 
     def block_diagonal(stars: np.array):
-        return stars
+        x = stars.shape[0]
+        y = stars.shape[1]
+        star_locs = coordinates(np.where(stars == 1))
+
+        blocked = []
+        for star in star_locs:
+            star_row = star[0]
+            star_col = star[1]
+            # north west
+            if (star_row-1 in range(x)) and (star_col-1 in range(y)):
+                blocked.append((star_row-1, star_col-1))
+            # north east
+            if (star_row-1 in range(x)) and (star_col+1 in range(y)):
+                blocked.append((star_row-1, star_col+1))
+            # south west
+            if (star_row+1 in range(x)) and (star_col-1 in range(y)):
+                blocked.append((star_row+1, star_col-1))
+            # south east
+            if (star_row+1 in range(x)) and (star_col+1 in range(y)):
+                blocked.append((star_row+1, star_col+1))
+
+        stars[tuple(np.transpose(blocked))] = -1
+        return reset_stars(stars, star_locs)
 
     def block_column(stars: np.array):
         '''
@@ -63,9 +85,9 @@ def blocked(puzzle: np.array, stars: np.array):
         '''
         rows = stars.shape[0]
         star_locs = coordinates(np.where(stars == 1))
-        # block every column in the same row
+        # block every row in the same col
         for star in star_locs:
-            star_col = star[0]
+            star_col = star[1]
             for row in range(rows):
                 stars[row, star_col] = -1
 
@@ -80,7 +102,7 @@ def blocked(puzzle: np.array, stars: np.array):
         star_locs = coordinates(np.where(stars == 1))
         # block every column in the same row
         for star in star_locs:
-            star_row = star[1]
+            star_row = star[0]
             for col in range(cols):
                 stars[star_row, col] = -1
 
@@ -97,7 +119,7 @@ def blocked(puzzle: np.array, stars: np.array):
     return stars
 
 
-def smallest_group(puzzle: np.array, stars: np.array):
+def smallest_group(puzzle: np.array, stars: np.array, available_loc: np.array):
     '''
         Given an input puzzle, return the smallest available group by index
         (e.g. 2)
@@ -114,8 +136,20 @@ def smallest_group(puzzle: np.array, stars: np.array):
     min_count = np.amin(f, axis=0)[1]
 
     # top left most smallest group
-    s = np.where(f[:, 1] == min_count)[0][0]
-    return s
+    smallest = np.where(f[:, 1] == min_count)[0][0]
+    group_loc = coordinates(np.where(puzzle == smallest))
+    common = list(set(group_loc).intersection(available_loc))
+
+    while not common:
+        test = np.where(f[:, 0] == smallest)
+        smallest_loc = np.where(f[:, 0] == smallest)[0]
+        f = np.delete(f, smallest_loc, axis=0)
+        min_count = np.amin(f, axis=0)[1]
+        group = np.where(f[:, 1] == min_count)[0][0]
+        smallest = f[group][0]
+        group_loc = coordinates(np.where(puzzle == smallest))
+        common = list(set(group_loc).intersection(available_loc))
+    return smallest
 
 
 def place_star(puzzle: np.array, stars: np.array):
@@ -147,10 +181,9 @@ def place_star(puzzle: np.array, stars: np.array):
 
         return tpm_point
 
-    # TODO: needs to return the smallest available group.
-    s = smallest_group(puzzle, stars)
-    group_loc = coordinates(np.where(puzzle == s))
     available_loc = coordinates(np.where(stars == 0))
+    s = smallest_group(puzzle, stars, available_loc)
+    group_loc = coordinates(np.where(puzzle == s))
     common = list(set(group_loc).intersection(available_loc))
     if len(common) > 0:
         star_loc = top_left_most(common)
