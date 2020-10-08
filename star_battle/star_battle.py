@@ -3,13 +3,14 @@
 import numpy as np
 
 # internal
-from solver import solve
+from tools.solver import solve
 
 if __name__ == "__main__":
-    puzzle = np.genfromtxt(f'puzzles/puzzle1.data', delimiter=',')
+    puzzle = np.genfromtxt(f'data/puzzles/puzzle1.data', delimiter=',')
     stars = np.zeros(puzzle.shape)
 
     print('Puzzle:')
     print(puzzle)
 
     stars = solve(puzzle)
+    print(stars)
