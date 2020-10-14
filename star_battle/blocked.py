@@ -3,7 +3,7 @@
 import numpy as np
 
 # internal
-from .coordinates import coordinates
+from coordinates import coordinates
 
 
 def blocked(puzzle: np.array, stars: np.array) -> np.array:

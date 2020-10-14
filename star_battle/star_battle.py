@@ -3,7 +3,7 @@
 import numpy as np
 
 # internal
-from tools.solver import solve
+from solver import solve
 
 if __name__ == "__main__":
     puzzle = np.genfromtxt(f'data/puzzles/puzzle1.data', delimiter=',')

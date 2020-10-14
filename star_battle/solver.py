@@ -3,10 +3,10 @@
 import numpy as np
 
 # internal
-from .blocked import blocked
-from .coordinates import coordinates
-from .illegal import check_illegal
-from .tree import Node
+from blocked import blocked
+from coordinates import coordinates
+from illegal import check_illegal
+from tree import Node
 
 
 def smallest_group(puzzle: np.array,

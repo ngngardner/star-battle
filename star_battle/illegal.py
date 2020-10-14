@@ -2,10 +2,28 @@
 # package
 import numpy as np
 
+# internal
+from coordinates import coordinates
+
 
 def check_illegal(puzzle: np.array, stars: np.array) -> bool:
     def check_groups(puzzle: np.array, stars: np.array) -> bool:
-        # TODO
+        star_locs = coordinates(np.where(stars == 1))
+        unique_groups = []
+        for star in star_locs:
+            group = puzzle[star]
+            if group not in unique_groups:
+                unique_groups.append(group)
+
+        for group in unique_groups:
+            c = coordinates(np.where(puzzle == group))
+            num_blocked = 0
+            group_size = len(c)
+            for coordinate in c:
+                if stars[coordinate] == -1:
+                    num_blocked += 1
+            if num_blocked >= group_size:
+                return True
         return False
 
     def check_columns(stars: np.array) -> bool:

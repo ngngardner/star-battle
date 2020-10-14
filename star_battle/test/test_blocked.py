@@ -21,7 +21,7 @@ def test_blocked_center():
 
 def test_blocked_corner():
     '''
-        Test that blocked2 is the output of puzzle2 and stars2,
+        Test that blocked2 is the output of puzzle1 and stars2,
         where there is a star in a corner of the board
     '''
     assert(True)
@@ -29,7 +29,7 @@ def test_blocked_corner():
 
 def test_blocked_corner():
     '''
-        Test that blocked2 is the output of puzzle2 and stars2,
+        Test that blocked2 is the output of puzzle1 and stars2,
         where there is a star in a corner of the board
     '''
     assert(True)
