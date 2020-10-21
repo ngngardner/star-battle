@@ -6,7 +6,7 @@ import numpy as np
 from solver import solve
 
 if __name__ == "__main__":
-    puzzle = np.genfromtxt(f'data/puzzles/puzzle1.data', delimiter=',')
+    puzzle = np.genfromtxt(f'data/puzzles/puzzle2.data', delimiter=',')
     stars = np.zeros(puzzle.shape)
 
     print('Puzzle:')

@@ -114,21 +114,24 @@ def solve(puzzle: np.array):
     node = Node(stars)
 
     while True:
-        prev_stars = np.copy(node.data)
-        stars = place_star(puzzle, prev_stars)
+        if not check_illegal(puzzle, node.data):
+            prev_stars = np.copy(node.data)
+            stars = place_star(puzzle, prev_stars)
 
-        new_star_loc = last_placed_star(stars, prev_stars)
+            new_star_loc = last_placed_star(stars, prev_stars)
 
-        node.insert(stars)
+            node.insert(stars, new_star_loc)
 
-        node = node.children[-1]
-        num_stars = len(coordinates(np.where(node.data == 1)))
-        if check_illegal(puzzle, node.data):
-            node = node.parent
-            node.delete_children()
-            node.data[new_star_loc] = -1
+            node = node.children[-1]
+            num_stars = len(coordinates(np.where(node.data == 1)))
         else:
-            if num_stars == stars.shape[0]:
-                print('found solution')
-                return stars
-                break
+            if node.parent is not None:
+                bad_loc = node.star_loc
+                node = node.parent
+                node.delete_children()
+                node.data[bad_loc] = -1
+
+        if num_stars == stars.shape[0]:
+            print('found solution')
+            return stars
+            break
